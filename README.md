@@ -65,30 +65,6 @@ Installer les dependances :
 npm install
 ```
 
-Creer le fichier d'environnement :
-
-```bash
-cp .env.example .env
-```
-
-Renseigner les variables Supabase dans `.env` :
-
-```env
-EXPO_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-EXPO_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
-```
-
-Initialiser la base de donnees Supabase avec le fichier :
-
-```text
-supabase/seed.sql
-```
-
-Lancer le projet :
-
-```bash
-npm start
-```
 
 ## Scripts
 
@@ -99,24 +75,7 @@ npm run ios      # Lance l'application sur iOS
 npm run web      # Lance la version web
 ```
 
-## Base de donnees
 
-Le projet utilise trois tables principales :
+## Auteur
 
-- `missions` : missions ecologiques disponibles.
-- `participations` : inscriptions des utilisateurs aux missions.
-- `profiles` : informations des utilisateurs.
-
-Les politiques RLS Supabase sont activees afin de securiser l'acces aux donnees.
-
-## Variables d'environnement
-
-Les identifiants Supabase doivent rester en local dans `.env`. Le depot contient uniquement `.env.example` pour documenter les variables necessaires.
-
-## Etat du projet
-
-Le projet contient les fondations d'une application mobile complete : authentification, navigation, donnees distantes, gestion des missions et suivi utilisateur.
-
-## Licence
-
-Projet academique / personnel. A adapter selon le contexte de publication.
+Projet réalisé par Yasmine Soussi.
