@@ -2,9 +2,15 @@
   "compilerOptions": {
     "target": "ES2020",
     "module": "ESNext",
-    "jsx": "react-jsx",
-    "moduleResolution": "Bundler",
+    "jsx": "react-native",
+    "moduleResolution": "node",
+    "allowJs": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true,
+    "noEmit": true,
     "strict": true,
+    "baseUrl": ".",
     "skipLibCheck": true,
     "types": [
       "react",

@@ -1,10 +1,16 @@
+// Écran de connexion utilisateur EcoAction
+// Permet à l’utilisateur de se connecter avec email et mot de passe
+// Utilise la fonction signIn du AuthProvider
+// Après connexion réussie → navigation vers l’écran principal (liste missions)
+
 import { useState } from 'react';
 import { View, Text, TextInput, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../providers/AuthProvider';
-import { Link, router } from 'expo-router'; // ← pour naviguer
+import { Link } from 'expo-router'; // ← navigation via Redirect dans _layout
 
 export default function LoginScreen() {
+    // récupérer fonction connexion depuis AuthProvider
   const { signIn } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -15,10 +21,10 @@ export default function LoginScreen() {
     setLoading(true);
     setError(null);
     try {
+      // appel AuthProvider → connexion Supabase
       await signIn(email, password);
 
-      // ✅ Navigation après connexion réussie
-      router.push('/index'); // ← ici tu mets la route de ta liste de missions
+      // la redirection est gérée par Redirect dans app/_layout.tsx
     } catch (e: any) {
       setError(e.message || 'Erreur lors de la connexion');
     } finally {
@@ -33,6 +39,8 @@ export default function LoginScreen() {
           <Text style={styles.title}>EcoAction</Text>
           <Text style={styles.subtitle}>Agissez pour l’environnement</Text>
         </View>
+
+        {/* carte formulaire */}
         <View style={styles.card}>
           {!!error && <Text style={styles.error}>{error}</Text>}
 

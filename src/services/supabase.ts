@@ -1,4 +1,7 @@
-// src/services/supabase.ts
+//configure la connexion avec Supabase
+// Permet d'accéder à la base de données et aux services backend
+
+
 import { createClient } from '@supabase/supabase-js';
 import Constants from 'expo-constants';
 
@@ -8,11 +11,8 @@ import Constants from 'expo-constants';
  */
 const extra = Constants.expoConfig?.extra ?? {};
 
-const SUPABASE_URL =
-  extra.SUPABASE_URL ?? 'https://ywyogqgzkahxcjayclzi.supabase.co';
-const SUPABASE_ANON_KEY =
-  extra.SUPABASE_ANON_KEY ??
-  'sb_publishable_2GoKRec51kz9xkW8x3yQ_vtXZq-Ro';
+const SUPABASE_URL = extra.SUPABASE_URL as string | undefined;
+const SUPABASE_ANON_KEY = extra.SUPABASE_ANON_KEY as string | undefined;
 
 // Vérification rapide
 if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
@@ -20,9 +20,6 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
     'Supabase URL ou ANON_KEY manquant ! Vérifie app.config.ts et rebuild l’app.'
   );
 }
-
-console.log('Supabase URL:', SUPABASE_URL);
-console.log('Supabase Key:', SUPABASE_ANON_KEY.substring(0, 8) + '...');
 
 // Création du client Supabase
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);

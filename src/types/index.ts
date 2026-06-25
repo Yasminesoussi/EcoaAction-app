@@ -1,3 +1,5 @@
+// Définit les types (interfaces) utilisés dans l'application
+
 export interface UserProfile {
   id: string;
   email: string;

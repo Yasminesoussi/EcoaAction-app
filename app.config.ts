@@ -5,8 +5,8 @@ const config: ExpoConfig = {
   slug: 'ecoaction',
   scheme: 'ecoaction',
   extra: {
-    SUPABASE_URL: 'https://ywyogqgzkahxcjayclzi.supabase.co',
-    SUPABASE_ANON_KEY: 'sb_publishable_2GoKRec51kz9xkWgW8x3yQ_vtXZq-Ro',
+    SUPABASE_URL: process.env.EXPO_PUBLIC_SUPABASE_URL,
+    SUPABASE_ANON_KEY: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY,
   },
   plugins: ['expo-router'],
 };

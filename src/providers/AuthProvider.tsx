@@ -1,25 +1,45 @@
-// src/providers/AuthProvider.tsx
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { supabase } from '../services/supabase';
+// Ce fichier gère :
+// gère connexion Supabase
+// garde utilisateur connecté
+// charge profil
+// permet login / signup / logout
+// partage auth dans toute l’app
 
+import React, { createContext, useContext, useState, useEffect } from "react";
+import { supabase } from "../services/supabase";
+import { router } from "expo-router";
+
+export interface UserProfile {
+  id: string;
+  email?: string;
+  display_name?: string;
+  phone?: string;
+}
+// type du contexte Auth
 interface AuthContextProps {
-  sessionUserId: string | null;
-  profile: any | null;
+  sessionUserId: string | null;  // id utilisateur connecté
+  profile: UserProfile | null;
   initializing: boolean;
-  signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string) => Promise<void>;
-  signOut: () => Promise<void>;
+  signIn: (email: string, password: string) => Promise<void>; // connexion
+  signUp: (
+    email: string,
+    password: string,
+    meta?: { display_name?: string; phone?: string }
+  ) => Promise<void>; // inscription
+  signOut: () => Promise<void>;  // déconnexion
 }
 
 const AuthContext = createContext<AuthContextProps>({} as AuthContextProps);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [sessionUserId, setSessionUserId] = useState<string | null>(null);
-  const [profile, setProfile] = useState<any | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [initializing, setInitializing] = useState(true);
+ 
 
+
+  // au démarrage app → vérifier session Supabase
   useEffect(() => {
-    // Vérifie session Supabase au démarrage
     supabase.auth.getSession().then(({ data }) => {
       if (data.session?.user) {
         loadProfile(data.session.user.id);
@@ -27,85 +47,115 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setInitializing(false);
       }
     });
-
-    // Écoute les changements de session
     const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
         loadProfile(session.user.id);
       } else {
         setProfile(null);
         setSessionUserId(null);
+        setInitializing(false);
       }
     });
-
-    return () => sub?.subscription?.unsubscribe?.();
+    return () => sub?.subscription?.unsubscribe();
   }, []);
 
-  // Charge le profil utilisateur
+
+  // fonction charger profil utilisateur
   const loadProfile = async (userId: string) => {
-    console.log('Loading profile for:', userId);
-
-    // 1️⃣ Cherche dans la table profiles (ta table custom)
-    const { data: profileData, error: profileError } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
+    const { data: profileData } = await supabase
+      .from("profiles")
+      .select("id,email,display_name,phone")
+      .eq("id", userId)
       .maybeSingle();
-
-    if (profileError) console.error('Erreur profiles:', profileError.message);
-
     if (profileData) {
       setProfile(profileData);
     } else {
-      // 2️⃣ Fallback côté client : juste récupérer l’user auth via la session actuelle
-      const { data: sessionData, error: sessionError } = await supabase.auth.getUser();
-      if (sessionError) console.error('Erreur getUser:', sessionError.message);
-
-      // Vérifie que c’est bien le même user
-      const userFallback = sessionData?.user?.id === userId ? sessionData.user : { email: 'inconnu', id: userId };
-      setProfile(userFallback);
+      const { data: userData } = await supabase.auth.getUser();
+      const u = userData.user;
+      if (u) {
+        setProfile({
+          id: u.id,
+          email: u.email,
+          display_name: u.user_metadata?.display_name,
+          phone: u.user_metadata?.phone,
+        });
+      }
     }
-
     setSessionUserId(userId);
     setInitializing(false);
   };
 
-  // Connexion
+
+  // fonction connexion
   const signIn = async (email: string, password: string) => {
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
     if (error) throw error;
-    if (data.user) await loadProfile(data.user.id);
-  };
-
-  // Inscription
-  const signUp = async (email: string, password: string) => {
-    const { data, error } = await supabase.auth.signUp({ email, password });
-    if (error) throw error;
-
     if (data.user) {
-      // Crée automatiquement un profil vide dans 'profiles'
-      const { error: profileError } = await supabase.from('profiles').insert([{ id: data.user.id, email }]);
-      if (profileError) console.error('Erreur création profil:', profileError.message);
-
       await loadProfile(data.user.id);
     }
   };
 
-  // Déconnexion
+  const signUp = async (
+    email: string,
+    password: string,
+    meta?: { display_name?: string; phone?: string }
+  ) => {
+    console.log("Auth.signUp:start", {
+      email,
+      meta_present: !!meta,
+      display_name_len: (meta?.display_name || "").length,
+      phone_len: (meta?.phone || "").length,
+    });
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          display_name: meta?.display_name || "",
+          phone: meta?.phone || "",
+        },
+      },
+    });
+    console.log("Auth.signUp:response", {
+      user_present: !!data?.user,
+      error_present: !!error,
+      error_status: (error as any)?.status,
+      error_message: error?.message,
+      error_name: (error as any)?.name,
+    });
+    if (error) {
+      throw error;
+    }
+    await supabase.auth.signOut();
+    setProfile(null);
+    setSessionUserId(null);
+  };
+
   const signOut = async () => {
     await supabase.auth.signOut();
     setProfile(null);
     setSessionUserId(null);
   };
 
+
+    // fournir auth à toute l'app
   return (
     <AuthContext.Provider
-      value={{ sessionUserId, profile, initializing, signIn, signUp, signOut }}
+      value={{
+        sessionUserId,
+        profile,
+        initializing,
+        signIn,
+        signUp,
+        signOut,
+      }}
     >
       {children}
     </AuthContext.Provider>
   );
 };
 
-// Hook pour utiliser le contexte
 export const useAuth = () => useContext(AuthContext);
